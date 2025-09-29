@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EchoFlip - iPhone Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 8px;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 30px;
+            background: #000;
+            border-radius: 0 0 15px 15px;
+            z-index: 100;
+        }
+
+        .status-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: #fff;
+            font-size: 17px;
+            font-weight: 600;
+            z-index: 50;
+        }
+
+        .time {
+            margin-left: 10px;
+        }
+
+        .battery-info {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .home-screen {
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+
+        .app-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .app-icon:active {
+            transform: scale(0.9);
+        }
+
+        .app-icon.twitter {
+            background: #000;
+        }
+
+        .app-icon.youtube {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+        }
+
+        .app-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .app-screen {
+            height: 100%;
+            background: #000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .app-screen.active {
+            display: flex;
+        }
+
+        .app-header {
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            margin-top: 44px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .back-button {
+            color: #1d9bf0;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .app-title {
+            color: #fff;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .post-container,
+        .video-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            transition: transform 0.1s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .post-container:hover .long-press-hint,
+        .video-container:hover .long-press-hint {
+            opacity: 1;
+        }
+
+        .long-press-hint {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .tweet-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #1d9bf0, #0d7ec7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .username {
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .handle {
+            color: #8b98a5;
+            font-size: 14px;
+        }
+
+        .post-text {
+            color: #fff;
+            font-size: 16px;
+            line-height: 1.4;
+            margin-bottom: 16px;
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .play-icon {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .video-title {
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .video-stats {
+            color: #8b98a5;
+            font-size: 14px;
+        }
+
+        .dropdown-container {
+            margin-top: 20px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-header:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .dropdown-title {
+            display: flex;
+            align-items: center;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .dropdown-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .dropdown-arrow {
+            color: #8b98a5;
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            padding: 0 20px;
+        }
+
+        .dropdown-content.open {
+            max-height: 1000px;
+            padding: 0 20px 20px;
+        }
+
+        .dropdown-header.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .opposing-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .opposing-item:hover {
+            border-color: #667eea;
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .opposing-source {
+            font-size: 13px;
+            color: #8b98a5;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .opposing-title {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            line-height: 1.3;
+            font-size: 15px;
+        }
+
+        .opposing-snippet {
+            font-size: 14px;
+            color: #8b98a5;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .bias-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .bias-left {
+            background: rgba(25, 118, 210, 0.2);
+            color: #64b5f6;
+            border: 1px solid rgba(25, 118, 210, 0.3);
+        }
+
+        .bias-right {
+            background: rgba(194, 24, 91, 0.2);
+            color: #f48fb1;
+            border: 1px solid rgba(194, 24, 91, 0.3);
+        }
+
+        .bias-center {
+            background: rgba(123, 31, 162, 0.2);
+            color: #ce93d8;
+            border: 1px solid rgba(123, 31, 162, 0.3);
+        }
+
+        .loading-state {
+            display: none;
+            text-align: center;
+            padding: 30px 20px;
+            color: #667eea;
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .success-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(76, 175, 80, 0.9);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+            font-size: 14px;
+        }
+
+        .success-indicator.show {
+            opacity: 1;
+        }
+
+        .pulse-animation {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(102, 126, 234, 0);
+            }
+        }
+
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 134px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 3px;
+        }
+
+        .long-press-progress {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.1);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #667eea;
+        }
+
+        .long-press-progress.active {
+            display: flex;
+            animation: longPressRing 0.8s linear forwards;
+        }
+
+        @keyframes longPressRing {
+            0% {
+                background: rgba(102, 126, 234, 0.1);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+            }
+
+            100% {
+                background: rgba(102, 126, 234, 0.3);
+                box-shadow: 0 0 0 20px rgba(102, 126, 234, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="phone-container">
+        <div class="phone-screen">
+            <div class="notch"></div>
+
+            <div class="status-bar">
+                <div class="time">9:41</div>
+                <div class="battery-info">
+                    <span>100%</span>
+                    <span>🔋</span>
+                </div>
+            </div>
+
+            <!-- Home Screen -->
+            <div class="home-screen" id="home-screen">
+                <div class="app-grid">
+                    <div class="app-icon twitter" onclick="openApp('twitter')">
+                        <span>𝕏</span>
+                        <div class="app-label">X</div>
+                    </div>
+                    <div class="app-icon youtube" onclick="openApp('youtube')">
+                        <span>▶</span>
+                        <div class="app-label">YouTube</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Twitter App -->
+            <div class="app-screen" id="twitter-screen">
+                <div class="app-header">
+                    <div class="back-button" onclick="goHome()">← Home</div>
+                    <div class="app-title">X</div>
+                    <div></div>
+                </div>
+
+                <div class="content-area">
+                    <div class="post-container" id="tweet-content">
+                        <div class="long-press-progress">🔄</div>
+                        <div class="tweet-header">
+                            <div class="avatar">AI</div>
+                            <div class="user-info">
+                                <div class="username">Dr. AI Researcher</div>
+                                <div class="handle">@AIFutureNow • 2h</div>
+                            </div>
+                        </div>
+                        <div class="post-text">
+                            🚨 BREAKING: New AI models are approaching AGI faster than predicted. We're looking at
+                            potentially transformative AI within 18 months. This could revolutionize medicine, solve
+                            climate change, and usher in an era of unprecedented prosperity. The future of humanity is
+                            about to change forever. #AGI #AI #FutureOfHumanity
+                        </div>
+                        <div class="long-press-hint">Hold to flip 🔄</div>
+                    </div>
+
+                    <div class="loading-state" id="twitter-loading">
+                        <div class="loading-spinner"></div>
+                        <div>Finding opposing perspectives...</div>
+                    </div>
+
+                    <div class="dropdown-container" id="twitter-dropdown" style="display: none;">
+                        <div class="dropdown-header" onclick="toggleDropdown('twitter')">
+                            <div class="dropdown-title">
+                                <span class="dropdown-icon">↔️</span>
+                                Alternative Perspectives Found
+                            </div>
+                            <div class="dropdown-arrow">▼</div>
+                        </div>
+                        <div class="dropdown-content">
+                            <div class="opposing-item">
+                                <div class="opposing-source">@AISkeptic_PhD</div>
+                                <div class="opposing-title">The AGI Hype Cycle: Why We're Still Decades Away</div>
+                                <div class="opposing-snippet">Current AI systems are sophisticated pattern matching, not
+                                    intelligence. Claims of imminent AGI ignore fundamental limitations in reasoning,
+                                    consciousness, and general problem-solving...</div>
+                                <div class="bias-indicator bias-right">Skeptical Analysis</div>
+                            </div>
+
+                            <div class="opposing-item">
+                                <div class="opposing-source">@TechEthicsWatch</div>
+                                <div class="opposing-title">The Dangers of AGI Acceleration Without Safeguards</div>
+                                <div class="opposing-snippet">Rushing toward AGI without proper alignment research could
+                                    lead to catastrophic outcomes. We need regulation, safety protocols, and
+                                    international cooperation before deployment...</div>
+                                <div class="bias-indicator bias-center">Safety Focused</div>
+                            </div>
+
+                            <div class="opposing-item">
+                                <div class="opposing-source">@PhilosophyOfMind</div>
+                                <div class="opposing-title">Consciousness vs Computation: The Hard Problem AGI Can't
+                                    Solve</div>
+                                <div class="opposing-snippet">Even if we achieve human-level performance in all tasks,
+                                    the question of machine consciousness remains unsolved. True AGI may require
+                                    understanding consciousness itself...</div>
+                                <div class="bias-indicator bias-left">Philosophical View</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- YouTube App -->
+            <div class="app-screen" id="youtube-screen">
+                <div class="app-header">
+                    <div class="back-button" onclick="goHome()">← Home</div>
+                    <div class="app-title">YouTube</div>
+                    <div></div>
+                </div>
+
+                <div class="content-area">
+                    <div class="video-container" id="video-content">
+                        <div class="long-press-progress">🔄</div>
+                        <div class="video-thumbnail">
+                            <div class="play-icon">▶</div>
+                            💊
+                        </div>
+                        <div class="video-title">Ozempic: The Miracle Weight Loss Drug That Changed My Life</div>
+                        <div class="video-stats">HealthSuccess Stories • 1.2M views • 3 days ago</div>
+                        <div class="long-press-hint">Hold to flip 🔄</div>
+                    </div>
+
+                    <div class="loading-state" id="youtube-loading">
+                        <div class="loading-spinner"></div>
+                        <div>Searching for counter-perspectives...</div>
+                    </div>
+
+                    <div class="dropdown-container" id="youtube-dropdown" style="display: none;">
+                        <div class="dropdown-header" onclick="toggleDropdown('youtube')">
+                            <div class="dropdown-title">
+                                <span class="dropdown-icon">↔️</span>
+                                Contrasting Medical Viewpoints
+                            </div>
+                            <div class="dropdown-arrow">▼</div>
+                        </div>
+                        <div class="dropdown-content">
+                            <div class="opposing-item">
+                                <div class="opposing-source">Dr. Endocrine Concerns</div>
+                                <div class="opposing-title">Ozempic Side Effects: What Doctors Don't Always Tell You
+                                </div>
+                                <div class="opposing-snippet">Long-term GLP-1 agonist use linked to gastroparesis,
+                                    pancreatitis risk, and potential thyroid concerns. Weight regain common after
+                                    discontinuation. Patients need full informed consent...</div>
+                                <div class="bias-indicator bias-center">Medical Caution</div>
+                            </div>
+
+                            <div class="opposing-item">
+                                <div class="opposing-source">Diabetes Patient Advocate</div>
+                                <div class="opposing-title">The Ozempic Shortage: When Weight Loss Hype Hurts Diabetics
+                                </div>
+                                <div class="opposing-snippet">Off-label weight loss use has created shortages for Type 2
+                                    diabetics who actually need this medication. Insurance complications and access
+                                    issues are harming the intended patient population...</div>
+                                <div class="bias-indicator bias-left">Patient Rights</div>
+                            </div>
+
+                            <div class="opposing-item">
+                                <div class="opposing-source">Nutrition Science Review</div>
+                                <div class="opposing-title">Study: Lifestyle Changes vs. GLP-1 Drugs - 5 Year Outcomes
+                                </div>
+                                <div class="opposing-snippet">New research comparing sustainable weight loss methods
+                                    shows behavioral interventions with dietitian support achieving similar long-term
+                                    results without pharmaceutical dependency...</div>
+                                <div class="bias-indicator bias-right">Research Based</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="home-indicator"></div>
+        </div>
+    </div>
+
+    <div class="success-indicator" id="success-indicator">
+        🎉 Perspectives flipped successfully!
+    </div>
+
+    <script>
+        let isFlipping = false;
+        let currentApp = null;
+        let longPressTimer = null;
+        let longPressStarted = false;
+
+        function openApp(app) {
+            currentApp = app;
+            document.getElementById('home-screen').style.transform = 'translateX(-100%)';
+            setTimeout(() => {
+                document.getElementById('home-screen').style.display = 'none';
+                document.getElementById(`${app}-screen`).classList.add('active');
+
+                // Set up long press listeners for the content
+                setupLongPress(app);
+            }, 300);
+        }
+
+        function goHome() {
+            if (currentApp) {
+                document.getElementById(`${currentApp}-screen`).classList.remove('active');
+                document.getElementById('home-screen').style.display = 'flex';
+                setTimeout(() => {
+                    document.getElementById('home-screen').style.transform = 'translateX(0)';
+                }, 10);
+
+                // Reset any opened dropdowns
+                const dropdown = document.getElementById(`${currentApp}-dropdown`);
+                if (dropdown) {
+                    dropdown.style.display = 'none';
+                    const content = dropdown.querySelector('.dropdown-content');
+                    const header = dropdown.querySelector('.dropdown-header');
+                    content.classList.remove('open');
+                    header.classList.remove('open');
+                }
+
+                // Clean up long press listeners
+                cleanupLongPress();
+
+                currentApp = null;
+            }
+        }
+
+        function setupLongPress(platform) {
+            const contentElement = platform === 'twitter' ?
+                document.getElementById('tweet-content') :
+                document.getElementById('video-content');
+
+            const progressIndicator = contentElement.querySelector('.long-press-progress');
+
+            // Touch events
+            contentElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startLongPress(platform, contentElement, progressIndicator);
+            }, { passive: false });
+
+            contentElement.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                endLongPress(contentElement, progressIndicator);
+            }, { passive: false });
+
+            contentElement.addEventListener('touchcancel', (e) => {
+                endLongPress(contentElement, progressIndicator);
+            });
+
+            // Mouse events
+            contentElement.addEventListener('mousedown', (e) => {
+                startLongPress(platform, contentElement, progressIndicator);
+            });
+
+            contentElement.addEventListener('mouseup', (e) => {
+                endLongPress(contentElement, progressIndicator);
+            });
+
+            contentElement.addEventListener('mouseleave', (e) => {
+                endLongPress(contentElement, progressIndicator);
+            });
+        }
+
+        function cleanupLongPress() {
+            // Clear any existing timers
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            longPressStarted = false;
+        }
+
+        function startLongPress(platform, contentElement, progressIndicator) {
+            if (longPressStarted || isFlipping) return;
+
+            longPressStarted = true;
+
+            // Visual feedback
+            contentElement.style.transform = 'scale(0.98)';
+            progressIndicator.classList.add('active');
+
+            longPressTimer = setTimeout(() => {
+                flipContent(platform);
+                endLongPress(contentElement, progressIndicator);
+            }, 800); // 800ms long press
+        }
+
+        function endLongPress(contentElement, progressIndicator) {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+
+            // Reset visual feedback
+            if (contentElement) {
+                contentElement.style.transform = 'scale(1)';
+            }
+            if (progressIndicator) {
+                progressIndicator.classList.remove('active');
+            }
+
+            longPressStarted = false;
+        }
+
+        function toggleDropdown(platform) {
+            const dropdown = document.getElementById(`${platform}-dropdown`);
+            const content = dropdown.querySelector('.dropdown-content');
+            const header = dropdown.querySelector('.dropdown-header');
+
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                header.classList.remove('open');
+            } else {
+                content.classList.add('open');
+                header.classList.add('open');
+            }
+        }
+
+        function flipContent(platform) {
+            if (isFlipping) return;
+            isFlipping = true;
+
+            const loading = document.getElementById(`${platform}-loading`);
+            const dropdown = document.getElementById(`${platform}-dropdown`);
+            const contentContainer = document.querySelector(`#${platform}-screen .post-container, #${platform}-screen .video-container`);
+            const successIndicator = document.getElementById('success-indicator');
+
+            // Add visual feedback
+            contentContainer.classList.add('pulse-animation');
+
+            // Show loading state
+            loading.style.display = 'block';
+
+            // Simulate API call delay
+            setTimeout(() => {
+                // Hide loading
+                loading.style.display = 'none';
+
+                // Show dropdown
+                dropdown.style.display = 'block';
+
+                // Auto-open dropdown with animation
+                setTimeout(() => {
+                    toggleDropdown(platform);
+                }, 100);
+
+                // Show success indicator
+                successIndicator.classList.add('show');
+
+                // Clean up animations
+                contentContainer.classList.remove('pulse-animation');
+
+                // Hide success indicator
+                setTimeout(() => {
+                    successIndicator.classList.remove('show');
+                }, 2000);
+
+                isFlipping = false;
+            }, 2000);
+        }
+
+        // Add hover effects and animations
+        document.addEventListener('DOMContentLoaded', function () {
+            const opposingItems = document.querySelectorAll('.opposing-item');
+
+            opposingItems.forEach(item => {
+                item.addEventListener('mouseenter', function () {
+                    this.style.transform = 'translateX(6px) scale(1.02)';
+                });
+
+                item.addEventListener('mouseleave', function () {
+                    this.style.transform = 'translateX(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
